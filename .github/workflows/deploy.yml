@@ -20,6 +20,7 @@ jobs:
 
     - name: Install dependencies
       run: npm install --legacy-peer-deps
+      working-directory: strapi-app
 
     - name: Build Strapi project
       run: npm run build
