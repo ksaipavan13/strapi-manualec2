@@ -57,3 +57,4 @@ README.md
 
 This README provides a summary of the tasks performed, the errors encountered, and the steps taken to resolve them. The project is now set up for continuous deployment using GitHub Actions and is deployed on an EC2 instance.
 
+# Trigger Build
