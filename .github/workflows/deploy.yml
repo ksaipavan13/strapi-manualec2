@@ -20,13 +20,12 @@ jobs:
 
     - name: Install dependencies
       run: npm install --legacy-peer-deps
-      working-directory: strapi-app
 
-    - name: Build Strapi project
+    - name: Build Strapi
       run: npm run build
-      working-directory: strapi-app
+      working-directory: ./strapi-app
 
-    - name: Add SSH key
+    - name: Start SSH Agent
       uses: webfactory/ssh-agent@v0.5.3
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -34,8 +33,8 @@ jobs:
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.5
       with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
           cd /srv/strapi-app
