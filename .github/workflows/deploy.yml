@@ -16,25 +16,25 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: 18
+          node-version: '18'
 
       - name: Install dependencies
-        run: |
-          npm install --legacy-peer-deps
+        run: npm install --legacy-peer-deps
 
-      - name: Build Strapi
-        run: |
-          npm run build
+      - name: Build Strapi project
+        run: npm run build
+
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@v0.1.5
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
-          script: |
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@13.127.2.38 << 'EOF'
             cd /srv/strapi
             git pull origin main
             npm install --legacy-peer-deps
             npm run build
             pm2 restart strapi --update-env
+          EOF
