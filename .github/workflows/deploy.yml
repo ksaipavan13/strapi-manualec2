@@ -1,4 +1,4 @@
-name: Deploy Strapi
+name: Deploy Strapi to EC2
 
 on:
   push:
@@ -6,33 +6,37 @@ on:
       - main
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
 
-    - name: Install dependencies
-      run: npm install
-
-    - name: Build Strapi
-      run: npm run build
-
-    - name: Deploy to EC2
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_KEY }}
-        script: |
-          cd /srv/strapi
-          git pull origin main
+      - name: Install dependencies
+        run: |
           npm install
+          npm ci
+          npm install ajv@^6.12.4 ajv-errors ajv-keywords --save
+
+      - name: Build Strapi
+        run: |
           npm run build
-          pm2 restart strapi
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd /srv/strapi
+            git pull origin main
+            npm install
+            npm run build
+            pm2 restart strapi --update-env
