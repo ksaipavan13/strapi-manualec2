@@ -1,4 +1,4 @@
-name: Deploy Strapi to EC2
+name: Build and Deploy
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v2
 
     - name: Set up Node.js
@@ -20,22 +20,25 @@ jobs:
 
     - name: Install dependencies
       run: npm install --legacy-peer-deps
-      working-directory: strapi-app
 
-    - name: Build Strapi
+    - name: Build Strapi project
       run: npm run build
       working-directory: strapi-app
 
-    - name: Deploy via SSH
+    - name: Add SSH key
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.5
       with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.SSH_KEY }}
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          cd /srv/strapi
+          cd /srv/strapi-app
           git pull origin main
-          cd strapi-app
           npm install --legacy-peer-deps
           npm run build
           pm2 restart strapi --update-env
