@@ -6,35 +6,36 @@ on:
       - main
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '18'
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '18'
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
+    - name: Install dependencies
+      run: npm install --legacy-peer-deps
+      working-directory: strapi-app
 
-      - name: Build Strapi project
-        run: npm run build
+    - name: Build Strapi
+      run: npm run build
+      working-directory: strapi-app
 
-      - name: Add SSH key
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
-
-      - name: Deploy to EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@13.127.2.38 << 'EOF'
-            cd /srv/strapi
-            git pull origin main
-            npm install --legacy-peer-deps
-            npm run build
-            pm2 restart strapi --update-env
-          EOF
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          cd /srv/strapi
+          git pull origin main
+          cd strapi-app
+          npm install --legacy-peer-deps
+          npm run build
+          pm2 restart strapi --update-env
